@@ -1,3 +1,4 @@
+import os
 import cv2
 import time
 import numpy as np
@@ -49,6 +50,12 @@ labels = {0: 'angry', 1: 'disgust', 2: 'fear', 3: 'happy', 4: 'neutral', 5: 'sad
 webcam = cv2.VideoCapture(0)
 last_emotion = None
 last_time = time.time()
+
+def home():
+    return "Hello, Render!"
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
+
 
 while True:
     ret, frame = webcam.read()
