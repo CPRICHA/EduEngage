@@ -6,6 +6,8 @@ from keras.models import model_from_json
 from flask import Flask, jsonify, render_template
 import threading
 from collections import defaultdict
+import signal
+import sys
 
 # Flask App Setup
 app = Flask(__name__)
@@ -38,9 +40,13 @@ def extract_features(image):
 
 # Start Flask in a Thread
 def run_flask():
-    app.run(debug=True, use_reloader=False)
+    try:
+        app.run(debug=True, use_reloader=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    except Exception as e:
+        print(f"Flask server error: {e}")
 
 flask_thread = threading.Thread(target=run_flask)
+flask_thread.daemon = True
 flask_thread.start()
 
 # Emotion Labels
@@ -51,12 +57,17 @@ webcam = cv2.VideoCapture(0)
 last_emotion = None
 last_time = time.time()
 
-def home():
-    return "Hello, Render!"
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
+# Graceful Shutdown
+def signal_handler(sig, frame):
+    print("Shutting down gracefully...")
+    webcam.release()
+    cv2.destroyAllWindows()
+    sys.exit(0)
 
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
+# Main Loop
 while True:
     ret, frame = webcam.read()
     if not ret:
@@ -87,5 +98,6 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+# Release resources
 webcam.release()
 cv2.destroyAllWindows()
